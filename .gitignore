@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+
+# Next.js / build output
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# environment files (never commit secrets; .env.example is the template)
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# tests and tooling output
+coverage/
+*.log
+npm-debug.log*
+
+# editors, OS and local assistant tooling
+.idea/
+.vscode/
+.claude/
+.DS_Store
+Thumbs.db
+
+# project inputs that are not part of the app
+prompt.txt
+roadmap_example.jpg

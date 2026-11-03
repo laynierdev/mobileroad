@@ -1,0 +1,45 @@
+{
+  "name": "mobileroad",
+  "version": "0.1.0",
+  "description": "AI-assisted roadmap and project tracker that takes a mobile app from idea to production.",
+  "private": true,
+  "license": "MIT",
+  "keywords": [
+    "roadmap",
+    "project-management",
+    "mobile",
+    "nextjs",
+    "gemini",
+    "timeline"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.2",
+    "mammoth": "^1.13.0",
+    "next": "^16.4.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "unpdf": "^2.1.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.4",
+    "typescript": "5.9",
+    "vitest": "^5.1.0"
+  }
+}
