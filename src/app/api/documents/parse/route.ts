@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { allowRequest, clientIp, getStore } from "@/ai/rateLimit";
 import { DocumentError, MAX_DOCUMENT_BYTES, parseDocument } from "@/documents/parse";
 
 export const dynamic = "force-dynamic";
@@ -6,7 +7,13 @@ export const runtime = "nodejs";
 /** Seconds. Vercel functions stop after their configured duration. */
 export const maxDuration = 30;
 
+const UPLOADS_PER_WINDOW = 20;
+const WINDOW_SEC = 600;
+
 export async function POST(request: Request) {
+  if (!(await allowRequest(getStore(), "upload", clientIp(request), UPLOADS_PER_WINDOW, WINDOW_SEC))) {
+    return NextResponse.json({ ok: false, code: "rate_limited", error: "Too many uploads. Wait a few minutes or paste the text instead." }, { status: 429 });
+  }
   let form: FormData;
   try {
     form = await request.formData();

@@ -11,7 +11,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?logo=bootstrap&logoColor=white)
 ![Gemini](https://img.shields.io/badge/AI-Gemini%20%2B%20offline%20mock-4285F4?logo=googlegemini&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-70%20passing-2dbf7a)
+![Tests](https://img.shields.io/badge/tests-82%20passing-2dbf7a)
 ![Storage](https://img.shields.io/badge/storage-local--first-0f9d84)
 
 <img src="docs/images/home.png" alt="MobileRoad roadmap dashboard showing KPI cards, overall progress, milestones and a monthly timeline" width="100%">
@@ -30,6 +30,7 @@
 - [How progress and status are modeled](#how-progress-and-status-are-modeled)
 - [Quick start](#quick-start)
 - [Configure Gemini (optional)](#configure-gemini-optional)
+- [Protecting your API key: usage limits](#protecting-your-api-key-usage-limits)
 - [Your data and backups](#your-data-and-backups)
 - [Deploy: GitHub and Vercel](#deploy-github-and-vercel)
 - [Architecture](#architecture)
@@ -209,6 +210,26 @@ rate limit, timeout, overload, invalid output) the answer falls back to the offl
 warning, and your data is untouched. Transient 5xx errors are retried once.
 Check which provider is active with `GET /api/ai/status` → `{"provider":"gemini"|"mock"}`.
 
+## Protecting your API key: usage limits
+
+On a public deployment anyone can press the AI buttons, so the server limits how much of your Gemini quota can be used.
+Both limits are checked **before** Gemini is called; when one is reached the free offline mock answers instead
+(with a visible notice), so the app keeps working and costs nothing.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `AI_RATE_LIMIT_PER_IP` | `10` | AI requests allowed per visitor address in one window |
+| `AI_RATE_LIMIT_WINDOW_SEC` | `600` | Window length in seconds (10 minutes) |
+| `AI_DAILY_LIMIT` | `200` | Total Gemini requests for the whole site per UTC day |
+
+Document uploads are limited to 20 per address per 10 minutes. Invalid requests are not counted, and if the counters
+cannot be read the request is answered by the mock instead of Gemini (it fails closed).
+
+Counters are kept in memory by default, which on Vercel means **per serverless instance**: good protection against
+casual abuse, but not an exact cap. For exact limits add Upstash Redis (free tier) and set `UPSTASH_REDIS_REST_URL` and
+`UPSTASH_REDIS_REST_TOKEN`; Vercel's Marketplace integration sets `KV_REST_API_URL` / `KV_REST_API_TOKEN` for you, which are also supported.
+It is also worth setting a spending or quota cap on the key in Google AI Studio / Cloud Billing as a last line of defense.
+
 ## Your data and backups
 
 There is no server-side database. Projects live in the browser's `localStorage`
@@ -240,12 +261,22 @@ The workflow in `.github/workflows/ci.yml` runs lint, type check, tests and a pr
 ### 2. Deploy on Vercel
 
 1. Go to <https://vercel.com/new> and import the GitHub repository. Next.js is detected automatically; no build settings are needed.
-2. Under **Settings → Environment Variables** add `GEMINI_API_KEY`, `GEMINI_MODEL` and (optionally) `AI_TIMEOUT_MS`. Without them the deployment runs in offline mock mode.
+2. Add your key as an environment variable (never in the repository). In the Vercel dashboard open the project → **Settings → Environment Variables**, add `GEMINI_API_KEY` (mark it **Sensitive**), `GEMINI_MODEL` (e.g. `gemini-3.5-flash-lite`) and optionally `AI_TIMEOUT_MS` and the limit variables, enable **Production** (and **Preview** if you want AI there), then **redeploy**. Or with the CLI:
+
+   ```bash
+   npm i -g vercel
+   vercel link
+   vercel env add GEMINI_API_KEY production
+   vercel env add GEMINI_MODEL production
+   vercel --prod
+   ```
+
+   Without a key the deployment runs in offline mock mode. Check it at `/api/ai/status`.
 3. Deploy. Every later push redeploys automatically.
 
 Things to know before sharing the link:
 
-- **The AI endpoints have no login or rate limit.** Anyone who can open your deployment can spend your Gemini key's quota. For a public demo leave `GEMINI_API_KEY` unset (mock mode), or protect the deployment with Vercel's Deployment Protection / password before adding a key.
+- **Abuse protection:** the AI endpoints are rate limited (see [usage limits](#protecting-your-api-key-usage-limits)). Add Upstash Redis for exact limits, and for a fully public demo you can still leave `GEMINI_API_KEY` unset to run in mock mode.
 - **Data lives in each visitor's browser, per domain.** The production URL and every preview URL have separate data; use the export / import backup to move projects between them.
 - **Limits:** document uploads are capped at 4 MB (Vercel function request bodies stop at 4.5 MB) and the AI routes declare `maxDuration = 60` seconds. Your Vercel plan may impose lower function limits.
 - Never commit `.env.local`; it is git-ignored. Keep secrets in Vercel's environment settings only.
@@ -294,7 +325,7 @@ docs/images/      Screenshots used by this README
 | `npm run typecheck` | TypeScript |
 | `npm run lint` | ESLint |
 
-`npm test` runs **70 deterministic tests** (fixed dates, no network): progress calculations (empty, none or
+`npm test` runs **82 deterministic tests** (fixed dates, no network): progress calculations (empty, none or
 all complete, mixed, undated features), status and checkpoint rules, dependency behaviour, editing
 validation, the AI layer (mock outputs, every Gemini failure mode with a fake `fetch`, retries, fallback, API
 routes), document parsing with real generated PDF and DOCX files, the multi-project repository (including

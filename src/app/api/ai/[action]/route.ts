@@ -8,6 +8,7 @@ import {
   roadmapRequestSchema,
   scopeChangeRequestSchema,
 } from "@/ai/schemas";
+import { clientIp, gateAi, getStore, readLimits } from "@/ai/rateLimit";
 import { configuredProvider, runAi } from "@/ai/service";
 
 export const dynamic = "force-dynamic";
@@ -16,32 +17,38 @@ export const maxDuration = 60;
 
 const MAX_BODY_BYTES = 1_000_000;
 
-async function handle(action: string, body: unknown) {
+async function handle(action: string, body: unknown, request: Request) {
   const today = new Date();
+  // Counted only after the request body is valid, and only when it would reach the paid provider.
+  const run = async <T,>(call: Parameters<typeof runAi<T>>[0]) => {
+    const provider = configuredProvider();
+    const gate = provider ? await gateAi(getStore(), readLimits(), clientIp(request)) : null;
+    return gate && !gate.allowed ? runAi(call, null, gate.message) : runAi(call, provider);
+  };
   switch (action) {
     case "analyze": {
       const input = analyzeRequestSchema.parse(body);
-      return runAi((p) => p.analyzeRequirements(input));
+      return run((p) => p.analyzeRequirements(input));
     }
     case "roadmap": {
       const input = roadmapRequestSchema.parse(body);
-      return runAi((p) => p.generateRoadmap(input));
+      return run((p) => p.generateRoadmap(input));
     }
     case "recommendations": {
       const input = recommendationsRequestSchema.parse(body);
-      return runAi((p) => p.generateRecommendations(input.project, input.featureId, today));
+      return run((p) => p.generateRecommendations(input.project, input.featureId, today));
     }
     case "advisor": {
       const input = advisorRequestSchema.parse(body);
-      return runAi((p) => p.answerQuestion(input.project, input.question, input.history, today));
+      return run((p) => p.answerQuestion(input.project, input.question, input.history, today));
     }
     case "audit": {
       const input = auditRequestSchema.parse(body);
-      return runAi((p) => p.auditProject(input.project, today));
+      return run((p) => p.auditProject(input.project, today));
     }
     case "scope-change": {
       const input = scopeChangeRequestSchema.parse(body);
-      return runAi((p) => p.analyzeScopeChange(input.project, input.change, today));
+      return run((p) => p.analyzeScopeChange(input.project, input.change, today));
     }
     default:
       return null;
@@ -61,7 +68,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
   }
 
   try {
-    const result = await handle(action, body);
+    const result = await handle(action, body, request);
     if (!result) return NextResponse.json({ ok: false, error: `Unknown AI action: ${action}` }, { status: 404 });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {

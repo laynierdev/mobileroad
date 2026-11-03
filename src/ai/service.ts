@@ -20,7 +20,13 @@ export function configuredProvider(env: Env = process.env): AiProvider | null {
  * Runs an AI call. Falls back to the mock provider when Gemini is not configured or fails,
  * and says so in the envelope, so the UI never presents mock output as real AI.
  */
-export async function runAi<T>(call: (provider: AiProvider) => Promise<T>, provider: AiProvider | null = configuredProvider()): Promise<AiEnvelope<T>> {
+export async function runAi<T>(
+  call: (provider: AiProvider) => Promise<T>,
+  provider: AiProvider | null = configuredProvider(),
+  /** Set when a usage limit stopped the real AI: the mock answers and the reason is shown to the user. */
+  blockedMessage?: string,
+): Promise<AiEnvelope<T>> {
+  if (blockedMessage) return { data: await call(mockProvider), source: "mock", warning: `${blockedMessage} Showing offline (mock) results instead.` };
   if (!provider) return { data: await call(mockProvider), source: "mock" };
   try {
     return { data: await call(provider), source: provider.name };
