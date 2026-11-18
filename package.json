@@ -21,7 +21,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build:icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
@@ -39,6 +40,7 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.4",
+    "subset-font": "^2.9.0",
     "typescript": "5.9",
     "vitest": "^5.1.0"
   }

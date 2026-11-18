@@ -16,7 +16,7 @@ export function MilestoneCards({ milestones }: { milestones: MilestoneCard[] }) 
             {m.date ? (
               <>
                 <strong>{formatDate(m.date)}</strong> - {m.featureName}
-                {m.warning && <i className="bi bi-exclamation-triangle-fill text-warning ms-2" title="This feature is at risk" aria-label="At risk" />}
+                {m.warning && <i className="bi bi-exclamation-triangle-fill text-warning ms-2" title="This feature is at risk" role="img" aria-label="At risk" />}
                 {m.completed && <div className="mr-ms-done mt-1"><i className="bi bi-check-circle-fill me-1" />All features past this milestone</div>}
               </>
             ) : (

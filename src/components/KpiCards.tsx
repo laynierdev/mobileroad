@@ -26,7 +26,7 @@ export function KpiCards({ total, shown, counts, filter, onFilter }: Props) {
           <button
             key={status}
             type="button"
-            className={`mr-kpi${active ? " active" : ""}`}
+            className={`mr-kpi${active ? " active" : ""}${status === "not_started" ? " ns" : ""}`}
             style={{ ["--c" as string]: meta.color }}
             onClick={() => onFilter(active ? null : status)}
             aria-pressed={active}
