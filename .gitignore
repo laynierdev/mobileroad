@@ -30,3 +30,6 @@ Thumbs.db
 # project inputs that are not part of the app
 prompt.txt
 roadmap_example.jpg
+
+.vercel
+.env*
